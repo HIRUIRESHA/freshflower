@@ -15,12 +15,12 @@ jobs:
       mysql:
         image: mysql:8.0
         env:
-          MYSQL_ROOT_PASSWORD: root
+          MYSQL_ROOT_PASSWORD: 12345
           MYSQL_DATABASE: fresh_flower_db
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mysqladmin ping"
+          --health-cmd="mysqladmin ping -p12345"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=3
@@ -40,56 +40,45 @@ jobs:
         run: |
           mkdir -p src/test/resources
           cat > src/test/resources/test-config.properties << EOF
-          # Frontend URL (for Selenium tests)
           frontend.url=http://localhost:5173
-          
-          # Backend URL
           backend.url=http://localhost:8080
-          
-          # Test database configuration
           spring.datasource.url=jdbc:mysql://localhost:3306/fresh_flower_db
           spring.datasource.username=root
-          spring.datasource.password=root
-          
-          # Test user credentials
+          spring.datasource.password=12345
           test.user.email=test@example.com
           test.user.password=TestPassword123
           test.user.fullname=Test User
-          
-          # Selenium settings
           selenium.timeout.seconds=30
           selenium.headless=true
           EOF
 
       - name: Wait for MySQL to be ready
         run: |
-          while ! mysqladmin ping -h"127.0.0.1" -P3306 -uroot -proot --silent; do
+          until mysqladmin ping -h"127.0.0.1" -P3306 -uroot -p12345 --silent; do
+            echo "Waiting for MySQL..."
             sleep 1
           done
 
       - name: Create test database schema
         run: |
-          mysql -h 127.0.0.1 -P 3306 -u root -proot -e "CREATE DATABASE IF NOT EXISTS fresh_flower_db;"
+          mysql -h 127.0.0.1 -P 3306 -u root -p12345 -e "CREATE DATABASE IF NOT EXISTS fresh_flower_db;"
 
       - name: Build and run unit tests
-        run: |
-          mvn clean compile test -DskipITs=true
+        run: mvn clean compile test -DskipITs=true -Pci
         env:
           SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/fresh_flower_db
           SPRING_DATASOURCE_USERNAME: root
-          SPRING_DATASOURCE_PASSWORD: root
+          SPRING_DATASOURCE_PASSWORD: 12345
 
       - name: Run integration tests (Cucumber)
-        run: |
-          mvn verify -Dtest=CucumberTestRunner -DskipUnitTests=true
+        run: mvn verify -Dtest=CucumberTestRunner -DskipUnitTests=true -Pci
         env:
           SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/fresh_flower_db
           SPRING_DATASOURCE_USERNAME: root
-          SPRING_DATASOURCE_PASSWORD: root
+          SPRING_DATASOURCE_PASSWORD: 12345
 
       - name: Generate test reports
-        run: |
-          mvn surefire-report:report-only
+        run: mvn surefire-report:report-only
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -104,20 +93,6 @@ jobs:
     name: Selenium UI Tests
     runs-on: ubuntu-latest
     needs: test
-
-    services:
-      mysql:
-        image: mysql:8.0
-        env:
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: fresh_flower_db
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=3
 
     steps:
       - name: Checkout code
@@ -146,52 +121,31 @@ jobs:
         run: |
           mkdir -p src/test/resources
           cat > src/test/resources/test-config.properties << EOF
-          # Frontend URL (React app - will be started later)
           frontend.url=http://localhost:3000
-          
-          # Backend URL (Spring Boot app)
           backend.url=http://localhost:8080
-          
-          # Test database
           spring.datasource.url=jdbc:mysql://localhost:3306/fresh_flower_db
           spring.datasource.username=root
-          spring.datasource.password=root
-          
-          # Test user
+          spring.datasource.password=12345
           test.user.email=selenium@example.com
           test.user.password=SeleniumTest123
           test.user.fullname=Selenium User
-          
-          # Selenium settings
           selenium.timeout.seconds=30
           selenium.headless=true
           EOF
 
-      - name: Wait for MySQL
+      - name: Start backend and run Selenium tests
         run: |
-          while ! mysqladmin ping -h"127.0.0.1" -P3306 -uroot -proot --silent; do
-            sleep 1
+          mvn spring-boot:start -Pci
+          until curl -s http://localhost:8080/actuator/health | grep UP; do
+            echo "Waiting for backend..."
+            sleep 5
           done
-
-      - name: Start backend application
-        run: |
-          mvn spring-boot:run &
-          echo $! > spring-boot.pid
-          sleep 60  # Wait for app to start
-
-      - name: Run Selenium tests
-        run: |
-          mvn test -Dtest=LoginTest,SignupTest -DskipUnitTests=true
+          mvn verify -Dtest=LoginTest,SignupTest -DskipUnitTests=true -Pci
+          mvn spring-boot:stop -Pci
         env:
           SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/fresh_flower_db
           SPRING_DATASOURCE_USERNAME: root
-          SPRING_DATASOURCE_PASSWORD: root
-
-      - name: Stop backend application
-        run: |
-          if [ -f spring-boot.pid ]; then
-            kill $(cat spring-boot.pid) || true
-          fi
+          SPRING_DATASOURCE_PASSWORD: 12345
 
       - name: Upload Selenium reports
         uses: actions/upload-artifact@v4
