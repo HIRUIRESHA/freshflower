@@ -23,8 +23,6 @@
 		<cucumber.version>7.14.0</cucumber.version>
 		<selenium.version>4.15.0</selenium.version>
 		<webdrivermanager.version>5.6.0</webdrivermanager.version>
-		<skipITs>false</skipITs>
-		<skipUnitTests>false</skipUnitTests>
 		<maven-surefire-plugin.version>3.2.5</maven-surefire-plugin.version>
 		<maven-failsafe-plugin.version>3.2.5</maven-failsafe-plugin.version>
 	</properties>
@@ -88,13 +86,6 @@
 			<scope>test</scope>
 		</dependency>
 
-		<!-- Fix logback CVE -->
-		<dependency>
-			<groupId>ch.qos.logback</groupId>
-			<artifactId>logback-classic</artifactId>
-			<version>1.5.6</version>
-		</dependency>
-
 		<!-- Selenium -->
 		<dependency>
 			<groupId>org.seleniumhq.selenium</groupId>
@@ -115,101 +106,54 @@
 			<scope>test</scope>
 		</dependency>
 
-		<!-- JUnit & Mockito -->
+		<!-- H2 Database for Tests -->
 		<dependency>
-			<groupId>org.junit.jupiter</groupId>
-			<artifactId>junit-jupiter-api</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.junit.jupiter</groupId>
-			<artifactId>junit-jupiter-engine</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.mockito</groupId>
-			<artifactId>mockito-junit-jupiter</artifactId>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
 
-	<profiles>
-		<profile>
-			<id>ci</id>
-			<properties>
-				<skipITs>false</skipITs>
-				<skipUnitTests>false</skipUnitTests>
-			</properties>
-		</profile>
-	</profiles>
-
 	<build>
 		<plugins>
-			<!-- Spring Boot with start/stop for integration tests -->
+			<!-- Spring Boot Plugin -->
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>pre-integration-start</id>
-						<goals>
-							<goal>start</goal>
-						</goals>
-						<phase>pre-integration-test</phase>
-					</execution>
-					<execution>
-						<id>post-integration-stop</id>
-						<goals>
-							<goal>stop</goal>
-						</goals>
-						<phase>post-integration-test</phase>
-					</execution>
-				</executions>
 			</plugin>
 
-			<!-- Surefire for unit tests -->
+			<!-- Surefire Plugin for Unit Tests -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>${maven-surefire-plugin.version}</version>
 				<configuration>
-					<skipTests>${skipUnitTests}</skipTests>
-					<includes>
-						<include>**/*Test.java</include>
-						<include>**/*Tests.java</include>
-					</includes>
+					<!-- Exclude integration tests from unit test phase -->
 					<excludes>
 						<exclude>**/*IT.java</exclude>
 						<exclude>**/*ITest.java</exclude>
 						<exclude>**/CucumberTestRunner.java</exclude>
-						<exclude>**/selenium/**</exclude>
 					</excludes>
-					<systemPropertyVariables>
+					<systemProperties>
 						<spring.profiles.active>test</spring.profiles.active>
-					</systemPropertyVariables>
+					</systemProperties>
 				</configuration>
 			</plugin>
 
-			<!-- Failsafe for integration/Selenium tests -->
+			<!-- Failsafe Plugin for Integration Tests -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-failsafe-plugin</artifactId>
 				<version>${maven-failsafe-plugin.version}</version>
 				<configuration>
-					<skipTests>${skipITs}</skipTests>
 					<includes>
 						<include>**/*IT.java</include>
 						<include>**/*ITest.java</include>
 						<include>**/CucumberTestRunner.java</include>
-						<include>**/selenium/**</include>
 					</includes>
-					<excludes>
-						<exclude>**/*Test.java</exclude>
-						<exclude>**/*Tests.java</exclude>
-					</excludes>
-					<systemPropertyVariables>
+					<systemProperties>
 						<spring.profiles.active>test</spring.profiles.active>
-					</systemPropertyVariables>
+					</systemProperties>
 				</configuration>
 				<executions>
 					<execution>
@@ -221,7 +165,7 @@
 				</executions>
 			</plugin>
 
-			<!-- Compiler -->
+			<!-- Compiler Plugin -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -233,5 +177,13 @@
 				</configuration>
 			</plugin>
 		</plugins>
+
+		<!-- Test Resources -->
+		<testResources>
+			<testResource>
+				<directory>src/test/resources</directory>
+				<filtering>true</filtering>
+			</testResource>
+		</testResources>
 	</build>
 </project>
