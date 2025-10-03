@@ -62,7 +62,7 @@
 			</exclusions>
 		</dependency>
 
-		<!-- ✅ Cucumber with JUnit 5 -->
+		<!-- Cucumber -->
 		<dependency>
 			<groupId>io.cucumber</groupId>
 			<artifactId>cucumber-java</artifactId>
@@ -88,14 +88,14 @@
 			<scope>test</scope>
 		</dependency>
 
-		<!-- ✅ Fix logback CVE -->
+		<!-- Fix logback CVE -->
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-classic</artifactId>
 			<version>1.5.6</version>
 		</dependency>
 
-		<!-- Selenium Dependencies -->
+		<!-- Selenium -->
 		<dependency>
 			<groupId>org.seleniumhq.selenium</groupId>
 			<artifactId>selenium-java</artifactId>
@@ -115,7 +115,7 @@
 			<scope>test</scope>
 		</dependency>
 
-		<!-- Additional test dependencies for CI/CD -->
+		<!-- JUnit & Mockito -->
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-api</artifactId>
@@ -141,43 +141,33 @@
 				<skipUnitTests>false</skipUnitTests>
 			</properties>
 		</profile>
-		<profile>
-			<id>skip-integration-tests</id>
-			<properties>
-				<skipITs>true</skipITs>
-			</properties>
-		</profile>
-		<profile>
-			<id>skip-unit-tests</id>
-			<properties>
-				<skipUnitTests>true</skipUnitTests>
-			</properties>
-		</profile>
-		<profile>
-			<id>integration-tests</id>
-			<properties>
-				<skipITs>false</skipITs>
-				<skipUnitTests>true</skipUnitTests>
-			</properties>
-		</profile>
 	</profiles>
 
 	<build>
 		<plugins>
+			<!-- Spring Boot with start/stop for integration tests -->
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
-				<configuration>
-					<excludes>
-						<exclude>
-							<groupId>org.projectlombok</groupId>
-							<artifactId>lombok</artifactId>
-						</exclude>
-					</excludes>
-				</configuration>
+				<executions>
+					<execution>
+						<id>pre-integration-start</id>
+						<goals>
+							<goal>start</goal>
+						</goals>
+						<phase>pre-integration-test</phase>
+					</execution>
+					<execution>
+						<id>post-integration-stop</id>
+						<goals>
+							<goal>stop</goal>
+						</goals>
+						<phase>post-integration-test</phase>
+					</execution>
+				</executions>
 			</plugin>
 
-			<!-- Surefire Plugin for Unit Tests -->
+			<!-- Surefire for unit tests -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
@@ -192,7 +182,6 @@
 						<exclude>**/*IT.java</exclude>
 						<exclude>**/*ITest.java</exclude>
 						<exclude>**/CucumberTestRunner.java</exclude>
-						<!-- 🚀 Exclude Selenium tests from CI/CD -->
 						<exclude>**/selenium/**</exclude>
 					</excludes>
 					<systemPropertyVariables>
@@ -201,7 +190,7 @@
 				</configuration>
 			</plugin>
 
-			<!-- Failsafe Plugin for Integration Tests -->
+			<!-- Failsafe for integration/Selenium tests -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-failsafe-plugin</artifactId>
@@ -212,6 +201,7 @@
 						<include>**/*IT.java</include>
 						<include>**/*ITest.java</include>
 						<include>**/CucumberTestRunner.java</include>
+						<include>**/selenium/**</include>
 					</includes>
 					<excludes>
 						<exclude>**/*Test.java</exclude>
@@ -231,23 +221,7 @@
 				</executions>
 			</plugin>
 
-			<!-- Surefire Report Plugin -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-report-plugin</artifactId>
-				<version>${maven-surefire-plugin.version}</version>
-				<executions>
-					<execution>
-						<id>generate-test-report</id>
-						<phase>test</phase>
-						<goals>
-							<goal>report-only</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-
-			<!-- Compiler Plugin -->
+			<!-- Compiler -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -258,33 +232,6 @@
 					<encoding>UTF-8</encoding>
 				</configuration>
 			</plugin>
-
-			<!-- Resources Plugin for test resources -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-resources-plugin</artifactId>
-				<version>3.3.1</version>
-				<configuration>
-					<encoding>UTF-8</encoding>
-				</configuration>
-			</plugin>
 		</plugins>
-
-		<testResources>
-			<testResource>
-				<directory>src/test/resources</directory>
-				<filtering>true</filtering>
-			</testResource>
-		</testResources>
 	</build>
-
-	<reporting>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-report-plugin</artifactId>
-				<version>${maven-surefire-plugin.version}</version>
-			</plugin>
-		</plugins>
-	</reporting>
 </project>
