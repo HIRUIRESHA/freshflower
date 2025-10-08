@@ -25,6 +25,7 @@
 		<webdrivermanager.version>5.6.0</webdrivermanager.version>
 		<maven-surefire-plugin.version>3.2.5</maven-surefire-plugin.version>
 		<maven-failsafe-plugin.version>3.2.5</maven-failsafe-plugin.version>
+		<skip.selenium.tests>false</skip.selenium.tests>
 	</properties>
 
 	<dependencies>
@@ -128,18 +129,19 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>${maven-surefire-plugin.version}</version>
 				<configuration>
-					<!-- Exclude integration and Selenium tests from unit test phase -->
+					<!-- Exclude integration tests and selenium tests from unit test phase -->
 					<excludes>
 						<exclude>**/*IT.java</exclude>
 						<exclude>**/*ITest.java</exclude>
 						<exclude>**/CucumberTestRunner.java</exclude>
-						<exclude>**/*Selenium*.java</exclude>
-						<exclude>**/SignupTest.java</exclude>
+						<exclude>**/selenium/**</exclude>
 						<exclude>**/LoginTest.java</exclude>
+						<exclude>**/SignupTest.java</exclude>
+						<exclude>**/BaseTest.java</exclude>
 					</excludes>
-					<systemPropertyVariables>
+					<systemProperties>
 						<spring.profiles.active>test</spring.profiles.active>
-					</systemPropertyVariables>
+					</systemProperties>
 				</configuration>
 			</plugin>
 
@@ -155,13 +157,14 @@
 						<include>**/CucumberTestRunner.java</include>
 					</includes>
 					<excludes>
-						<exclude>**/*Selenium*.java</exclude>
-						<exclude>**/SignupTest.java</exclude>
+						<exclude>**/selenium/**</exclude>
 						<exclude>**/LoginTest.java</exclude>
+						<exclude>**/SignupTest.java</exclude>
+						<exclude>**/BaseTest.java</exclude>
 					</excludes>
-					<systemPropertyVariables>
+					<systemProperties>
 						<spring.profiles.active>test</spring.profiles.active>
-					</systemPropertyVariables>
+					</systemProperties>
 				</configuration>
 				<executions>
 					<execution>
@@ -185,5 +188,50 @@
 				</configuration>
 			</plugin>
 		</plugins>
+
+		<!-- Test Resources -->
+		<testResources>
+			<testResource>
+				<directory>src/test/resources</directory>
+				<filtering>true</filtering>
+			</testResource>
+		</testResources>
 	</build>
+
+	<profiles>
+		<profile>
+			<id>ci</id>
+			<properties>
+				<skip.selenium.tests>true</skip.selenium.tests>
+			</properties>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-surefire-plugin</artifactId>
+						<configuration>
+							<excludes>
+								<exclude>**/selenium/**</exclude>
+								<exclude>**/LoginTest.java</exclude>
+								<exclude>**/SignupTest.java</exclude>
+								<exclude>**/BaseTest.java</exclude>
+							</excludes>
+						</configuration>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-failsafe-plugin</artifactId>
+						<configuration>
+							<excludes>
+								<exclude>**/selenium/**</exclude>
+								<exclude>**/LoginTest.java</exclude>
+								<exclude>**/SignupTest.java</exclude>
+								<exclude>**/BaseTest.java</exclude>
+							</excludes>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 </project>

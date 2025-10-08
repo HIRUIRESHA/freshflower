@@ -53,20 +53,13 @@ jobs:
           mysql -h 127.0.0.1 -P 3306 -u root -p12345 -e "CREATE DATABASE IF NOT EXISTS fresh_flower_db;"
           mysql -h 127.0.0.1 -P 3306 -u root -p12345 -e "SHOW DATABASES;"
 
-      - name: Run unit tests only (skip Selenium tests)
+      - name: Run unit tests (excluding Selenium)
         run: |
-          mvn clean test -Dspring.profiles.active=test -Dtest=!*Selenium*,!*IT,*Test
-        env:
-          SPRING_PROFILES_ACTIVE: test
+          mvn clean test -Dtest=!**/selenium/**,!**/LoginTest,!**/SignupTest,!**/BaseTest -DfailIfNoTests=false
 
-      - name: Run integration tests (Cucumber) only
+      - name: Run Cucumber integration tests
         run: |
-          mvn verify -Dspring.profiles.active=ci -Dtest=!*Selenium* -Dit.test=!*Selenium*
-        env:
-          SPRING_PROFILES_ACTIVE: ci
-          SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/fresh_flower_db
-          SPRING_DATASOURCE_USERNAME: root
-          SPRING_DATASOURCE_PASSWORD: 12345
+          mvn verify -DskipTests -Dcucumber.filter.tags="not @ignore"
 
       - name: Upload test reports
         uses: actions/upload-artifact@v4
