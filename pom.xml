@@ -128,15 +128,18 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>${maven-surefire-plugin.version}</version>
 				<configuration>
-					<!-- Exclude integration tests from unit test phase -->
+					<!-- Exclude integration and Selenium tests from unit test phase -->
 					<excludes>
 						<exclude>**/*IT.java</exclude>
 						<exclude>**/*ITest.java</exclude>
 						<exclude>**/CucumberTestRunner.java</exclude>
+						<exclude>**/*Selenium*.java</exclude>
+						<exclude>**/SignupTest.java</exclude>
+						<exclude>**/LoginTest.java</exclude>
 					</excludes>
-					<systemProperties>
+					<systemPropertyVariables>
 						<spring.profiles.active>test</spring.profiles.active>
-					</systemProperties>
+					</systemPropertyVariables>
 				</configuration>
 			</plugin>
 
@@ -151,9 +154,14 @@
 						<include>**/*ITest.java</include>
 						<include>**/CucumberTestRunner.java</include>
 					</includes>
-					<systemProperties>
+					<excludes>
+						<exclude>**/*Selenium*.java</exclude>
+						<exclude>**/SignupTest.java</exclude>
+						<exclude>**/LoginTest.java</exclude>
+					</excludes>
+					<systemPropertyVariables>
 						<spring.profiles.active>test</spring.profiles.active>
-					</systemProperties>
+					</systemPropertyVariables>
 				</configuration>
 				<executions>
 					<execution>
@@ -177,13 +185,5 @@
 				</configuration>
 			</plugin>
 		</plugins>
-
-		<!-- Test Resources -->
-		<testResources>
-			<testResource>
-				<directory>src/test/resources</directory>
-				<filtering>true</filtering>
-			</testResource>
-		</testResources>
 	</build>
 </project>
