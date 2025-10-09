@@ -38,35 +38,36 @@ jobs:
 
       - name: Wait for MySQL to be ready
         run: |
-          echo "Waiting for MySQL to be ready..."
+          echo "⏳ Waiting for MySQL to be ready..."
           for i in {1..40}; do
             if mysqladmin ping -h"127.0.0.1" -P3306 -uroot -p12345 --silent; then
               echo "✅ MySQL is ready!"
               break
             fi
-            echo "⏳ Waiting for MySQL... attempt $i"
+            echo "⏳ Attempt $i: still waiting..."
             sleep 3
           done
 
-      - name: Verify test database
+      - name: Verify Test Database
         run: |
+          echo "🗃️ Verifying test database..."
           mysql -h127.0.0.1 -uroot -p12345 -e "CREATE DATABASE IF NOT EXISTS fresh_flower_db;"
           mysql -h127.0.0.1 -uroot -p12345 -e "SHOW DATABASES;"
 
       - name: Run Unit Tests (excluding Selenium)
         run: |
-          echo "🏃 Running Maven tests (excluding Selenium)..."
-          mvn -B -e -X clean test \
-            -Dtest=!**/selenium/**,!**/LoginTest,!**/SignupTest,!**/BaseTest \
+          echo "🏃 Running backend unit tests (no Selenium)..."
+          mvn -B -e clean test \
             -Dspring.profiles.active=test \
+            -Dtest=!**/selenium/**,!**/LoginTest,!**/SignupTest,!**/BaseTest \
             -DfailIfNoTests=false
 
       - name: Run Cucumber Integration Tests
         run: |
-          echo "🌱 Running Cucumber tests..."
+          echo "🌱 Running Cucumber integration tests..."
           mvn verify -Dcucumber.filter.tags="not @ignore" -DskipUnitTests
 
-      - name: Upload Test Reports (even on failure)
+      - name: Upload Test Reports (Always Run)
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -125,7 +126,7 @@ jobs:
 
       - name: Build Application JAR
         run: |
-          echo "🧱 Building application..."
+          echo "🧱 Building Spring Boot JAR..."
           mvn clean package -DskipTests
 
       - name: Display Build Info
