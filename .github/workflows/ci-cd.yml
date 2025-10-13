@@ -35,7 +35,8 @@ jobs:
 
       # 5️⃣ Run Unit & Cucumber Tests (in CI profile, skips GUI Selenium)
       - name: Run Unit & Cucumber Tests
-        run: mvn -B test verify -P ci
+        run: mvn -B test verify -P ci -Dspring.profiles.active=ci
+
 
       # 6️⃣ Run Headless Selenium Tests (optional, if you want to include them)
       - name: Run Selenium Tests (Headless Chrome)
