@@ -23,26 +23,24 @@ jobs:
           java-version: '17'
           cache: maven
 
-      # 3️⃣ Install Chrome (for Selenium headless)
+      # 3️⃣ Install Chrome & Xvfb (for headless Selenium)
       - name: Install Chrome browser
         run: |
           sudo apt-get update
-          sudo apt-get install -y google-chrome-stable
+          sudo apt-get install -y google-chrome-stable xvfb
 
-      # 4️⃣ Build the project
+      # 4️⃣ Build project
       - name: Build with Maven
         run: mvn -B clean compile
 
-      # 5️⃣ Run Unit & Cucumber Tests (in CI profile, skips GUI Selenium)
+      # 5️⃣ Run Unit & Cucumber Tests (skip GUI Selenium)
       - name: Run Unit & Cucumber Tests
         run: mvn -B test verify -P ci -Dspring.profiles.active=ci
 
-
-      # 6️⃣ Run Headless Selenium Tests (optional, if you want to include them)
-      - name: Run Selenium Tests (Headless Chrome)
-        run: |
-          xvfb-run mvn -B test -Dskip.selenium.tests=false
-        continue-on-error: true  # So pipeline won't fail if Selenium acts up
+      # 6️⃣ Run Selenium Headless Tests
+      - name: Run Selenium Tests
+        run: xvfb-run mvn -B test -Dskip.selenium.tests=false
+        continue-on-error: true
 
       # 7️⃣ Upload Cucumber HTML Report
       - name: Upload Cucumber Report
@@ -50,4 +48,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: cucumber-report
-          path: target/cucumber-reports/**/*.html
+          path: target/cucumber-reports/cucumber.html
